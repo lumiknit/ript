@@ -5,6 +5,7 @@ import { CellStruct as CellStruct } from '../../lib/cells';
 import { Editor } from '../editor';
 import './cell.scss';
 import CellOutputs from './CellOutputs';
+import { store } from '../../store';
 
 type Props = {
 	index: number;
@@ -22,6 +23,14 @@ const Cell: Component<Props> = (props) => {
 		}
 	};
 
+	const style = () => {
+		console.log('Updated style');
+		const fontFamily =
+			store.localSettings?.['editor.fontFamily'] ?? 'monospace';
+		const fontSize = store.localSettings?.['editor.fontSize'] ?? 16;
+		return `font-family: ${fontFamily}; font-size: ${fontSize}px;`;
+	};
+
 	return (
 		<div class="cell m-2 p-2">
 			<div class="cell-gutter">
@@ -30,7 +39,7 @@ const Cell: Component<Props> = (props) => {
 					<TbPlayerPlay />
 				</button>
 			</div>
-			<div class="cell-main">
+			<div style={style()} class="cell-main">
 				<Editor
 					language={props.cell.code.language}
 					content={props.cell.code.code}

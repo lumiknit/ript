@@ -15,6 +15,7 @@ import toast from 'solid-toast';
 import { configToExtension, EditorConfig, myBasicConfig } from './config';
 import './index.scss';
 import { cmLangExt } from './langs';
+import { store } from '../../store';
 
 type Props = JSX.HTMLAttributes<HTMLDivElement> & {
 	config?: EditorConfig;
@@ -44,6 +45,7 @@ const Editor: Component<Props> = (props_) => {
 	let state: EditorState;
 
 	const cfgCompartment = new Compartment();
+	const fontCompartment = new Compartment();
 
 	const updateConfig = async (newCfg: EditorConfig) => {
 		const ext = await configToExtension(newCfg);
@@ -59,6 +61,7 @@ const Editor: Component<Props> = (props_) => {
 	};
 
 	onMount(async () => {
+		console.log('Mounted');
 		const updateListener = EditorView.updateListener.of((e) => {
 			if (e.docChanged) {
 				const s = e.state.doc.toString();
@@ -74,6 +77,7 @@ const Editor: Component<Props> = (props_) => {
 				props.placeholder ? placeholder(props.placeholder) : [],
 				language.of([]),
 				cfgCompartment.of([]),
+				fontCompartment.of([]),
 			],
 		});
 
@@ -85,14 +89,16 @@ const Editor: Component<Props> = (props_) => {
 		updateConfig(props.config ?? {});
 
 		if (props.onKeyDown) {
-			root.addEventListener('keydown', props.onKeyDown, {
+			root!.addEventListener('keydown', props.onKeyDown, {
 				capture: true,
 			});
 		}
 	});
 
 	onCleanup(() => {
-		view.destroy();
+		if (view) {
+			view.destroy();
+		}
 	});
 
 	// Dark mode detect
@@ -114,6 +120,26 @@ const Editor: Component<Props> = (props_) => {
 		} else {
 			updateLanguage([]);
 		}
+	});
+
+	// Local settings change detect
+	createEffect(() => {
+		const s = store.localSettings;
+		if (!s) return;
+		const fontFamily = s['editor.fontFamily'] ?? 'monospace';
+		const fontSize = s['editor.fontSize'] ?? '16px';
+		console.log('Font family:', fontFamily);
+		const effect = fontCompartment.reconfigure(
+			EditorView.theme({
+				'*': {
+					fontFamily: fontFamily,
+					fontSize: `${fontSize}px`,
+				},
+			})
+		);
+		view.dispatch({
+			effects: [effect],
+		});
 	});
 
 	// Content change detect

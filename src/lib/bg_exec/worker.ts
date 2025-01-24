@@ -7,6 +7,8 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+const globalContext = {};
+
 class Console {
 	outputs: OutLine[] = [];
 
@@ -51,9 +53,9 @@ self.onmessage = async (e) => {
 
 				try {
 					console.log('[Worker] Creating a function from code');
-					const fn = new AsyncFunction('console', code);
+					const fn = new AsyncFunction('$', 'console', code);
 					console.log('[Worker] Executing the function');
-					await fn(con);
+					await fn(globalContext, con);
 					console.log('[Worker] Function executed');
 				} catch (e) {
 					console.error('[Worker] Error while executing code');

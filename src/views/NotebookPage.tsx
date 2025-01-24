@@ -1,27 +1,26 @@
 import { TbPlus } from 'solid-icons/tb';
 import { Component, For } from 'solid-js';
 
+import AIInput from '../components/ai-input/AIInput';
 import Cell from '../components/cell/Cell';
 import { CellStruct } from '../lib/cells';
-import { NotebookState } from '../lib/notebook_state';
+import { store } from '../store';
 
 const Notebook: Component = () => {
-	const s = new NotebookState();
-
 	const handleCodeUpdate = (index: number) => (code: string) => {
-		s.updateCell(index, (c: CellStruct) => ({
+		store.notebookState.updateCell(index, (c: CellStruct) => ({
 			...c,
 			code: { ...c.code, code },
 		}));
 	};
 
 	const handleRun = (index: number) => () => {
-		s.runCell(index);
+		store.notebookState.runCell(index);
 	};
 
 	return (
-		<div>
-			<For each={s.cells()}>
+		<div class="container">
+			<For each={store.notebookState.cells()}>
 				{(cell, i) => (
 					<Cell
 						index={i()}
@@ -35,12 +34,14 @@ const Notebook: Component = () => {
 			<div class="columns is-centered">
 				<button
 					class="button is-small is-primary"
-					onClick={() => s.addEmptyCell()}
+					onClick={() => store.notebookState.addEmptyCell()}
 				>
 					<TbPlus />
 					Add
 				</button>
 			</div>
+
+			<AIInput />
 		</div>
 	);
 };

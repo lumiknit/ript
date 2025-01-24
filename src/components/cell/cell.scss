@@ -23,11 +23,11 @@
 
 .cell-output {
 	//background-color: rgba(var(--bulma-primary-rgb), 0.25);
+	font-size: 1em;
 	padding: 0.25rem;
 }
 
 .cell-out-text {
-	font-family: monospace;
 	white-space: pre-wrap;
 	padding: 0.1rem 0.5rem;
 }
@@ -35,13 +35,11 @@
 .cell-out-error {
 	color: var(--bulma-danger-bold);
 	background-color: var(--bulma-danger-soft);
-	font-family: monospace;
 	white-space: pre-wrap;
 }
 
 .cell-out-warn {
 	color: var(--bulma-warning-bold);
 	background-color: var(--bulma-warning-soft);
-	font-family: monospace;
 	white-space: pre-wrap;
 }

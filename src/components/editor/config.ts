@@ -130,7 +130,7 @@ export const configToExtension = async (
 		extensions.push(keymap.of(foldKeymap));
 	}
 
-	const indentSize = config['indent.size'] ?? 4;
+	const indentSize = config['indent.size'] ?? 2;
 	extensions.push(EditorState.tabSize.of(indentSize));
 	extensions.push(
 		indentUnit.of(config['indent.useTab'] ? '\t' : ' '.repeat(indentSize))
