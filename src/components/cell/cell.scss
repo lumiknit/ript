@@ -1,0 +1,47 @@
+.cell {
+	display: flex;
+	flex-direction: row;
+	gap: 0.25rem;
+}
+
+.cell-gutter {
+	flex: 0 0 2.5rem;
+	display: flex;
+	flex-direction: column;
+	align-items: end;
+}
+
+.cell-main {
+	flex: 1;
+
+	border: 1px solid rgba(var(--bulma-text-rgb), 0.5);
+
+	& > :not(:first-child) {
+		border-top: 1px solid rgba(var(--bulma-text-rgb), 0.5);
+	}
+}
+
+.cell-output {
+	//background-color: rgba(var(--bulma-primary-rgb), 0.25);
+	padding: 0.25rem;
+}
+
+.cell-out-text {
+	font-family: monospace;
+	white-space: pre-wrap;
+	padding: 0.1rem 0.5rem;
+}
+
+.cell-out-error {
+	color: var(--bulma-danger-bold);
+	background-color: var(--bulma-danger-soft);
+	font-family: monospace;
+	white-space: pre-wrap;
+}
+
+.cell-out-warn {
+	color: var(--bulma-warning-bold);
+	background-color: var(--bulma-warning-soft);
+	font-family: monospace;
+	white-space: pre-wrap;
+}

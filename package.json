@@ -1,0 +1,52 @@
+{
+	"name": "ript",
+	"author": {
+		"name": "lumiknit",
+		"email": "aasr4r4@gmail.com",
+		"url": "https://github.com/lumiknit"
+	},
+	"license": "AGPL-3.0-only",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc -b && vite build",
+		"preview": "vite preview",
+		"format": "eslint --fix ./src && prettier --write ."
+	},
+	"dependencies": {
+		"@codemirror/autocomplete": "^6.18.4",
+		"@codemirror/commands": "^6.8.0",
+		"@codemirror/lang-javascript": "^6.2.2",
+		"@codemirror/lang-markdown": "^6.3.2",
+		"@codemirror/lang-yaml": "^6.1.2",
+		"@codemirror/language": "^6.10.8",
+		"@codemirror/legacy-modes": "^6.4.2",
+		"@codemirror/search": "^6.5.8",
+		"@codemirror/state": "^6.5.1",
+		"@codemirror/view": "^6.36.2",
+		"@lezer/highlight": "^1.2.1",
+		"@solid-primitives/media": "^2.3.0",
+		"@solidjs/router": "^0.15.3",
+		"bulma": "^1.0.3",
+		"codemirror": "^6.0.1",
+		"solid-icons": "^1.1.0",
+		"solid-js": "^1.9.3",
+		"solid-toast": "^0.5.0",
+		"thememirror": "^2.0.1",
+		"typescript-eslint": "^8.21.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.18.0",
+		"eslint": "^9.18.0",
+		"eslint-import-resolver-typescript": "^3.7.0",
+		"eslint-plugin-import": "^2.31.0",
+		"eslint-plugin-unused-imports": "^4.1.4",
+		"prettier": "^3.4.2",
+		"sass": "^1.83.4",
+		"typescript": "~5.6.2",
+		"vite": "^6.0.5",
+		"vite-plugin-solid": "^2.11.0"
+	}
+}
