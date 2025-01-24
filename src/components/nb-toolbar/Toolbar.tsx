@@ -6,7 +6,7 @@ type Props = {
 	s: NotebookState;
 };
 
-const Toolbar: Component<Props> = (props) => {
+const Toolbar: Component<Props> = () => {
 	return <div></div>;
 };
 

@@ -104,10 +104,10 @@ export class SimpleIDB {
 	open(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			const req = indexedDB.open(this.name);
-			req.onupgradeneeded = (e) => {
+			req.onupgradeneeded = () => {
 				const db = req.result;
 				if (!db.objectStoreNames.contains(this.store)) {
-					const store = db.createObjectStore(this.store, {
+					db.createObjectStore(this.store, {
 						keyPath: '_id',
 						autoIncrement: true,
 					});

@@ -22,7 +22,7 @@ const CellOutText: Component<Props> = (props) => {
 	);
 };
 
-const CellOutImage: Component<Props> = (props) => {
+const CellOutImage: Component<Props> = () => {
 	return <div> Unimplemented </div>;
 };
 
