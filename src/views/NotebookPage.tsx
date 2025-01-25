@@ -20,6 +20,8 @@ const Notebook: Component = () => {
 
 	return (
 		<div class="container">
+			<span>&nbsp;</span>
+
 			<For each={store.notebookState.cells()}>
 				{(cell, i) => (
 					<Cell
@@ -31,7 +33,7 @@ const Notebook: Component = () => {
 				)}
 			</For>
 
-			<div class="columns is-centered">
+			<div class="columns is-centered is-mobile">
 				<button
 					class="button is-small is-primary"
 					onClick={() => store.notebookState.addEmptyCell()}
