@@ -31,10 +31,8 @@ type Props = {
 };
 
 const Toolbar: Component<Props> = () => {
-	const s = () => store.notebookState;
-
 	const handleSave = async () => {
-		toast.promise(s().save(), {
+		toast.promise((async () => await store.notebookState.save())(), {
 			loading: 'Saving...',
 			success: 'Saved',
 			error: (e) => {
@@ -50,15 +48,21 @@ const Toolbar: Component<Props> = () => {
 				<TbDeviceFloppy />
 			</Btn>
 
-			<Btn class="" onClick={() => s().addEmptyCell()}>
+			<Btn class="" onClick={() => store.notebookState.addEmptyCell()}>
 				<TbPlus />
 			</Btn>
 
-			<Btn class="is-success" onClick={() => s().runCellsBefore()}>
+			<Btn
+				class="is-success"
+				onClick={() => store.notebookState.runCellsBefore()}
+			>
 				<TbPlayerPlay />
 			</Btn>
 
-			<Btn class="is-danger" onClick={() => s().resetContext()}>
+			<Btn
+				class="is-danger"
+				onClick={() => store.notebookState.resetContext()}
+			>
 				<TbPlayerStop />
 			</Btn>
 		</div>

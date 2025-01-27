@@ -1,6 +1,8 @@
 import { TbCheck, TbSparkles } from 'solid-icons/tb';
 import { Component, createSignal, Match, Switch } from 'solid-js';
+import toast from 'solid-toast';
 
+import { createLLMClientWithLocalSettings } from '../../lib/llm/helper_settings';
 import { store } from '../../store';
 
 const Title: Component = () => {
@@ -14,7 +16,13 @@ const Title: Component = () => {
 	};
 
 	const generateAITitle = async () => {
-		await store.notebookState.genTitle();
+		const llm = await createLLMClientWithLocalSettings();
+		if (!llm) {
+			toast.error('Failed to create LLM client');
+			return;
+		}
+
+		await store.notebookState.genTitle(llm);
 		setEditing(false);
 	};
 

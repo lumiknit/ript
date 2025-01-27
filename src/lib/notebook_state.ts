@@ -2,7 +2,6 @@ import { Accessor, batch, createSignal, Setter, Signal } from 'solid-js';
 
 import { Context } from './bg_exec';
 import { notebooksTx } from './idb';
-import { createLLMClientWithLocalSettings } from './llm/helper_settings';
 import {
 	CellOutput,
 	CellStruct,
@@ -11,6 +10,7 @@ import {
 } from './notebook/cells';
 import addCellPrompt from '../prompts/add_cell.tpl?raw';
 import genTitlePrompt from '../prompts/gen_title.tpl?raw';
+import { LLMClient } from './llm/interface';
 import {
 	freezeCell,
 	FrozenCell,
@@ -134,7 +134,7 @@ export class NotebookState {
 		this.cancel = () => {};
 
 		batch(() => {
-			this.cells().forEach((cell, i) => {
+			this.cells().forEach((cell) => {
 				cell[1]((c) => ({ ...c, output: undefined }));
 			});
 		});
@@ -273,10 +273,7 @@ export class NotebookState {
 	/**
 	 * Generate a code and add a cell with the LLM.
 	 */
-	async genNewCell(request: string) {
-		const llm = await createLLMClientWithLocalSettings();
-		if (!llm) throw new Error("Couldn't create LLM client");
-
+	async genNewCell(llm: LLMClient, request: string) {
 		const systemPrompt = addCellPrompt;
 
 		const cellMDs = [];
@@ -318,10 +315,7 @@ export class NotebookState {
 	/**
 	 * Generate a title with the LLM.
 	 */
-	async genTitle() {
-		const llm = await createLLMClientWithLocalSettings();
-		if (!llm) throw new Error("Couldn't create LLM client");
-
+	async genTitle(llm: LLMClient) {
 		const systemPrompt = genTitlePrompt;
 
 		const cellMDs = [];

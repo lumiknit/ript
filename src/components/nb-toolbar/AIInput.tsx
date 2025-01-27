@@ -2,6 +2,7 @@ import { TbSparkles } from 'solid-icons/tb';
 import { Component } from 'solid-js';
 import toast from 'solid-toast';
 
+import { createLLMClientWithLocalSettings } from '../../lib/llm/helper_settings';
 import { store } from '../../store';
 import { AutoIncrTextarea } from '../utils';
 
@@ -18,11 +19,20 @@ const AIInput: Component<Props> = () => {
 
 		inputRef!.value = '';
 
-		toast.promise(store.notebookState.genNewCell(v), {
-			loading: 'Sending to AI...',
-			success: 'AI response received',
-			error: 'Failed to send to AI',
-		});
+		const llm = await createLLMClientWithLocalSettings();
+		if (!llm) {
+			toast.error('Failed to create LLM client');
+			return;
+		}
+
+		toast.promise(
+			(async () => await store.notebookState.genNewCell(llm, v))(),
+			{
+				loading: 'Sending to AI...',
+				success: 'AI response received',
+				error: 'Failed to send to AI',
+			}
+		);
 	};
 
 	const handleKeyDown = (e: KeyboardEvent) => {

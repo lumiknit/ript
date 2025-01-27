@@ -25,6 +25,7 @@ export default tseslint.config(
 			},
 		},
 		rules: {
+			'import/no-cycle': 'error',
 			'no-console': 'off',
 			'no-undef': 'off',
 			'no-unused-vars': 'warn',
