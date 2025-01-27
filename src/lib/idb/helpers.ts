@@ -6,8 +6,8 @@ export const settingsTx = async <T>() => {
 	return await settingsIDB.transaction<T>('readwrite');
 };
 
-const fileIDB = new SimpleIDB('local', 'files', 1);
+const notebooksIDB = new SimpleIDB('local-nb', 'notebooks', 1);
 
-export const fileTx = async <T>() => {
-	return await fileIDB.transaction<T>('readwrite');
+export const notebooksTx = async <T>() => {
+	return await notebooksIDB.transaction<T>('readwrite');
 };

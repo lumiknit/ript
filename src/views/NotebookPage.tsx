@@ -1,9 +1,8 @@
 import { Component, For, Show } from 'solid-js';
 
-import AIInput from '../components/ai-input/AIInput';
 import Cell from '../components/cell/Cell';
-import { Header } from '../components/nb-toolbar';
-import { CellStruct } from '../lib/cells';
+import { Footer, Header } from '../components/nb-toolbar';
+import { CellStruct } from '../lib/notebook/cells';
 import { store } from '../store';
 
 const Notebook: Component = () => {
@@ -36,7 +35,7 @@ const Notebook: Component = () => {
 				)}
 			</For>
 
-			<AIInput />
+			<Footer />
 		</div>
 	);
 };

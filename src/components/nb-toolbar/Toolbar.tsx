@@ -5,6 +5,7 @@ import {
 	TbPlus,
 } from 'solid-icons/tb';
 import { Component, JSX } from 'solid-js';
+import toast from 'solid-toast';
 
 import { store } from '../../store';
 
@@ -31,9 +32,21 @@ type Props = {
 
 const Toolbar: Component<Props> = () => {
 	const s = () => store.notebookState;
+
+	const handleSave = async () => {
+		toast.promise(s().save(), {
+			loading: 'Saving...',
+			success: 'Saved',
+			error: (e) => {
+				console.error(e);
+				return 'Failed to save';
+			},
+		});
+	};
+
 	return (
 		<div class="nb-toolbar">
-			<Btn class="is-primary" onClick={() => {}}>
+			<Btn class="is-primary" onClick={handleSave}>
 				<TbDeviceFloppy />
 			</Btn>
 

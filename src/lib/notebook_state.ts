@@ -1,46 +1,129 @@
 import { Accessor, batch, createSignal, Setter, Signal } from 'solid-js';
 
 import { Context } from './bg_exec';
-import { CellOutput, CellStruct, cellStructToMD, OutLine } from './cells';
+import { notebooksTx } from './idb';
 import { createLLMClientWithLocalSettings } from './llm/helper_settings';
+import {
+	CellOutput,
+	CellStruct,
+	cellStructToMD,
+	OutLine,
+} from './notebook/cells';
 import addCellPrompt from '../prompts/add_cell.tpl?raw';
 import genTitlePrompt from '../prompts/gen_title.tpl?raw';
-
-export type NotebookDoc = {
-	version: number;
-	name: string;
-	cells: CellStruct[];
-};
+import {
+	freezeCell,
+	FrozenCell,
+	NotebookDoc,
+	thawCell,
+} from './notebook/notebook';
+import { longRandomString } from './random';
 
 /**
- * Notebook status
+ * Current UI Notebook State.
+ *
+ * This class contains the current state of the notebook.
  */
 export class NotebookState {
+	_id: string;
+
+	// Notebook name
 	name: Accessor<string>;
 	setName: Setter<string>;
 
+	// Notebook cells
 	cells: Accessor<Signal<CellStruct>[]>;
 	setCells: Setter<Signal<CellStruct>[]>;
 
+	// Current focused cell index.
 	focused: Accessor<number>;
 	setFocused: Setter<number>;
 
+	/**
+	 * Current worker context
+	 */
 	workerCtx: Context;
 
+	/**
+	 * Execution index counter
+	 */
 	execCnt: number = 0;
+
+	/**
+	 * Execution queue.
+	 * This queue contains the indexes of the cells that are to be
+	 */
 	execQueue: number[] = [];
+
+	/**
+	 * Execution status
+	 */
 	executing: boolean = false;
+
+	/**
+	 * Cancel function for the current execution
+	 */
 	cancel: () => void = () => {};
 
-	constructor(doc?: NotebookDoc) {
-		[this.name, this.setName] = createSignal(doc?.name ?? 'Untitled');
-		[this.cells, this.setCells] = createSignal(
-			(doc?.cells ?? []).map((c) => createSignal(c))
-		);
+	constructor() {
+		this._id = longRandomString();
+		[this.name, this.setName] = createSignal('Untitled');
+		[this.cells, this.setCells] = createSignal<Signal<CellStruct>[]>([]);
 		[this.focused, this.setFocused] = createSignal(-1);
 		this.workerCtx = new Context();
 	}
 
+	/**
+	 * Freeze the current notebook state.
+	 */
+	async freeze(): Promise<NotebookDoc> {
+		const cells: FrozenCell[] = await Promise.all(
+			this.cells().map(async (cell) => await freezeCell(cell[0]()))
+		);
+		return {
+			_id: this._id,
+			version: 1,
+			name: this.name(),
+			updatedAt: new Date().toISOString(),
+			cells,
+		};
+	}
+
+	/**
+	 * Thaw the notebook state from a frozen state.
+	 */
+	async thaw(doc: NotebookDoc) {
+		this.resetContext();
+
+		const cells: CellStruct[] = await Promise.all(doc.cells.map(thawCell));
+		this._id = doc._id;
+		this.setName(doc.name);
+		this.setCells(cells.map((c) => createSignal(c)));
+	}
+
+	/**
+	 * Save to idb
+	 */
+	async save() {
+		const doc = await this.freeze();
+		const tx = await notebooksTx<NotebookDoc>();
+		await tx.put(doc);
+	}
+
+	/**
+	 * Load from idb
+	 */
+	async load(id: string) {
+		const tx = await notebooksTx<NotebookDoc>();
+		const doc = await tx.get(id);
+		if (!doc) return;
+		await this.thaw(doc);
+	}
+
+	/**
+	 * Reset current working context.
+	 * If there is an ongoing execution, it will be cancelled.
+	 */
 	resetContext() {
 		if (this.cancel) this.cancel();
 
@@ -57,6 +140,9 @@ export class NotebookState {
 		});
 	}
 
+	/**
+	 * Insert a cell at the specified index.
+	 */
 	addCell(cell: CellStruct, index?: number) {
 		if (index === undefined) {
 			index = this.focused() + 1;
@@ -71,8 +157,13 @@ export class NotebookState {
 
 		// Update queue
 		this.execQueue = this.execQueue.map((v) => (v >= index ? v + 1 : v));
+
+		this.setFocused(index);
 	}
 
+	/**
+	 * Add an empty cell at the specified index.
+	 */
 	addEmptyCell(index?: number) {
 		const emptyCell: CellStruct = {
 			code: {
@@ -83,6 +174,9 @@ export class NotebookState {
 		this.addCell(emptyCell, index);
 	}
 
+	/**
+	 * Remove a cell at the specified index.
+	 */
 	removeCell(index: number) {
 		this.setCells((cs) => cs.filter((_, i) => i !== index));
 
@@ -94,12 +188,19 @@ export class NotebookState {
 		});
 	}
 
+	/**
+	 * Update a cell at the specified index.
+	 */
 	updateCell(index: number, v: CellStruct | ((c: CellStruct) => CellStruct)) {
 		const cellSig = this.cells()[index];
 		if (!cellSig) return;
 		cellSig[1](v);
 	}
 
+	/**
+	 * Execute all cells before the specified index.
+	 * If the index is not specified, all cells will be executed.
+	 */
 	runCellsBefore(index?: number) {
 		if (index === undefined) index = this.cells().length;
 		for (let i = 0; i < this.cells().length && i < index; i++) {
@@ -107,6 +208,9 @@ export class NotebookState {
 		}
 	}
 
+	/**
+	 * Execute a cell at the specified index.
+	 */
 	runCell(index: number) {
 		const cell = this.cells()[index];
 		if (!cell) return;
@@ -117,6 +221,9 @@ export class NotebookState {
 		this.execute();
 	}
 
+	/**
+	 * Execute cell loop.
+	 */
 	private async execute() {
 		if (this.executing) return;
 		this.executing = true;
@@ -163,7 +270,10 @@ export class NotebookState {
 		this.executing = false;
 	}
 
-	async addCellWithAI(request: string) {
+	/**
+	 * Generate a code and add a cell with the LLM.
+	 */
+	async genNewCell(request: string) {
 		const llm = await createLLMClientWithLocalSettings();
 		if (!llm) throw new Error("Couldn't create LLM client");
 
@@ -205,7 +315,10 @@ export class NotebookState {
 		this.addCell(cell);
 	}
 
-	async aiTitle() {
+	/**
+	 * Generate a title with the LLM.
+	 */
+	async genTitle() {
 		const llm = await createLLMClientWithLocalSettings();
 		if (!llm) throw new Error("Couldn't create LLM client");
 

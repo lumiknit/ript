@@ -6,3 +6,9 @@
 	display: flex;
 	gap: 0.25rem;
 }
+
+.nb-footer {
+	position: sticky;
+	bottom: 0;
+	background-color: var(--bulma-body-background-color);
+}

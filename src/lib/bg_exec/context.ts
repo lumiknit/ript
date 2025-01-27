@@ -2,8 +2,8 @@
  * Background JS Executor
  */
 
-import { OutLine } from '../cells';
 import { type Message, RunReqMsg } from './messages';
+import { OutLine } from '../notebook/cells';
 
 type LineCallback = (lines: OutLine[]) => void;
 

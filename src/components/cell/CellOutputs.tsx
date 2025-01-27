@@ -1,7 +1,7 @@
 import { Component, For, Match, Switch } from 'solid-js';
 
 import CellOutLine from './CellOutLine';
-import { CellOutput } from '../../lib/cells';
+import { CellOutput } from '../../lib/notebook/cells';
 
 type Props = {
 	output: CellOutput;

@@ -18,7 +18,7 @@ const AIInput: Component<Props> = () => {
 
 		inputRef!.value = '';
 
-		toast.promise(store.notebookState.addCellWithAI(v), {
+		toast.promise(store.notebookState.genNewCell(v), {
 			loading: 'Sending to AI...',
 			success: 'AI response received',
 			error: 'Failed to send to AI',
@@ -26,8 +26,9 @@ const AIInput: Component<Props> = () => {
 	};
 
 	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+		if (e.key === 'Enter' && !e.shiftKey) {
 			handleSend();
+			e.preventDefault();
 		}
 	};
 
@@ -37,7 +38,7 @@ const AIInput: Component<Props> = () => {
 				<AutoIncrTextarea
 					ref={inputRef!}
 					class="input"
-					placeholder="Request to AI"
+					placeholder="LLM codegen (Enter to send)"
 					onKeyDown={handleKeyDown}
 				/>
 			</p>

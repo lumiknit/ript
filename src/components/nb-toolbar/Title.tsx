@@ -14,7 +14,7 @@ const Title: Component = () => {
 	};
 
 	const generateAITitle = async () => {
-		await store.notebookState.aiTitle();
+		await store.notebookState.genTitle();
 		setEditing(false);
 	};
 
@@ -53,6 +53,7 @@ const Title: Component = () => {
 					</div>
 				</Match>
 				<Match when>
+					<code>{store.notebookState._id}</code>
 					<h1 class="title is-1" onClick={() => setEditing(true)}>
 						{store.notebookState.name() || 'Untitled'}
 					</h1>

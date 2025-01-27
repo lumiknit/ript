@@ -6,6 +6,9 @@ export type CellCode = {
 	code: string;
 };
 
+/**
+ * Output Level
+ */
 export type OutLevel = 'info' | 'warn' | 'error';
 
 /**
@@ -27,21 +30,20 @@ export type OutText = OutBase & {
 /**
  * Cell image output
  */
-export type OutImage = OutBase & {
+export type OutImage<Img = ImageBitmap> = OutBase & {
 	type: 'image';
-	level: 'info' | 'warn' | 'error';
-	value: ImageBitmap;
+	value: Img;
 };
 
 /**
  * Cell a single line output
  */
-export type OutLine = OutText | OutImage;
+export type OutLine<Img = ImageBitmap> = OutText | OutImage<Img>;
 
 /**
  * Cell Output
  */
-export type CellOutput = {
+export type CellOutput<Dt = Date, Img = ImageBitmap> = {
 	/**
 	 * The order in which the cell was executed
 	 */
@@ -50,28 +52,28 @@ export type CellOutput = {
 	/**
 	 * Execution start timestamp
 	 */
-	startAt: Date;
+	startAt: Dt;
 
 	/**
 	 * Execution end timestamp
 	 */
-	endAt?: Date;
+	endAt?: Dt;
 
 	/**
 	 * Output lines
 	 */
-	lines: OutLine[];
+	lines: OutLine<Img>[];
 };
 
 /**
  * Cell struct
  */
-export type CellStruct = {
+export type CellStruct<Dt = Date, Img = ImageBitmap> = {
 	/** Actual code */
 	code: CellCode;
 
 	/** Output of the code */
-	output?: CellOutput;
+	output?: CellOutput<Dt, Img>;
 };
 
 /**

@@ -1,7 +1,7 @@
 import { TbPlayerPlay } from 'solid-icons/tb';
 import { Component, Show } from 'solid-js';
 
-import { CellStruct as CellStruct } from '../../lib/cells';
+import { CellStruct as CellStruct } from '../../lib/notebook/cells';
 import { Editor } from '../editor';
 import './cell.scss';
 import CellOutputs from './CellOutputs';
@@ -56,6 +56,10 @@ const Cell: Component<Props> = (props) => {
 			</div>
 			<div style={style()} class="cell-main">
 				<Editor
+					placeholder={
+						'Code here, Ctrl/Cmd+Enter to run, language: ' +
+						props.cell.code.language
+					}
 					language={props.cell.code.language}
 					content={props.cell.code.code}
 					onFocus={handleFocus}

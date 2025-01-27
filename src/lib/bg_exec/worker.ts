@@ -1,7 +1,7 @@
 // Loop for wait for the worker to finish
 
-import { OutLine } from '../cells';
 import { Message } from './messages';
+import { OutLine } from '../notebook/cells';
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 

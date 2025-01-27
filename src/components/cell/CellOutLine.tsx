@@ -1,7 +1,7 @@
 import { Component, onMount } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
-import { OutImage, OutLine, OutText } from '../../lib/cells';
+import { OutImage, OutLine, OutText } from '../../lib/notebook/cells';
 
 type Props = {
 	out: OutLine;

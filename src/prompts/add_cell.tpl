@@ -13,6 +13,7 @@ You should give a code for the next cell based on the user's input.
   - You can use `await` on top level.
   - Use await to prevent not executing promises.
 - **Use console to show the user's expectation.**
+- At the beginning add short comments about the request (intention) and the code.
 
 ## User's input
 
