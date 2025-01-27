@@ -220,6 +220,7 @@ const LocalSettingsEdit: Component = () => {
 				label="Groq Model"
 				settingKey="ai.groq.model"
 				options={[
+					'deepseek-r1-distill-llama-70b',
 					'llama-3.3-70b-versatile',
 					'llama-3.1-8b-instant',
 					'llama-guard-3-8b',

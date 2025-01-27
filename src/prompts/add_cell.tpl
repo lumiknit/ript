@@ -42,6 +42,8 @@ console.error: (img: OffscreenCanvas) => void;
 $: Record<string, any>;
 ```
 
+- For image outputs, *use* `OffscreenCanvas` rather than HTML / DOM / canvas.
+
 # Example
 
 The example result for "wait a seconda and fetch google page" is as follows:
