@@ -63,10 +63,14 @@ export class Context {
 	createInstance() {
 		this.worker = new Worker(new URL('./worker.ts', import.meta.url));
 		this.worker.onmessage = this.onMessage.bind(this);
+		this.worker.onerror = (e) => {
+			console.error('Worker error', e);
+		};
 	}
 
 	terminateInstance() {
 		this.worker.terminate();
+		this.resolveRun([]);
 		this.createInstance();
 	}
 

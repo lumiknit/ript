@@ -12,7 +12,7 @@ const CellOutputs: Component<Props> = (props) => {
 		<div class="cell-output">
 			<Switch>
 				<Match when={props.output.lines.length === 0}>
-					<div class="empty">No output</div>
+					<div class="empty is-italic">(No output)</div>
 				</Match>
 				<Match when>
 					<For each={props.output.lines}>

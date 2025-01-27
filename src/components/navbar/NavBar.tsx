@@ -34,7 +34,7 @@ const NavBar: Component = () => {
 
 	return (
 		<nav
-			class="navbar is-transparent is-fixed-top"
+			class="navbar is-transparent"
 			role="navigation"
 			aria-label="main navigation"
 		>

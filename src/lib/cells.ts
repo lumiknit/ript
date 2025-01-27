@@ -48,9 +48,14 @@ export type CellOutput = {
 	index: number;
 
 	/**
-	 * Executed timestamp
+	 * Execution start timestamp
 	 */
-	timestamp: Date;
+	startAt: Date;
+
+	/**
+	 * Execution end timestamp
+	 */
+	endAt?: Date;
 
 	/**
 	 * Output lines
@@ -67,4 +72,19 @@ export type CellStruct = {
 
 	/** Output of the code */
 	output?: CellOutput;
+};
+
+/**
+ * Convert a cell struct to markdown format
+ */
+export const cellStructToMD = (cell: CellStruct): string => {
+	const code = cell.code.code;
+	let result = `### Code\n` + '```javascript\n' + code + '\n```\n';
+
+	const o = cell.output;
+	if (o) {
+		const outputs = o.lines.map((l) => l.value).join('\n');
+		result += `### Outputs\n` + '```\n' + outputs + '\n```\n';
+	}
+	return result;
 };

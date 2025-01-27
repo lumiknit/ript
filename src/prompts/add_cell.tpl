@@ -8,6 +8,7 @@ You should give a code for the next cell based on the user's input.
   - Your code block should start with '```javascript' and end with '```'.
 - Your code should be a valid JavaScript code for modern browser.
 - Your code should be short and clean. Your code should be readible for mobile devices.
+- For result variables, instead 'var' or 'let', just set in the global context.
 - When the executor runs your code, it'll wrap your code with an async function and execute it.
   - You can use `await` on top level.
   - Use await to prevent not executing promises.
@@ -50,8 +51,8 @@ The example result for "wait a seconda and fetch google page" is as follows:
 await sleep(1000);
 
 // Fetch google page.
-let url = 'https://www.google.com';
+url = 'https://www.google.com';
 let resp = await fetch(url);
-let text = await resp.text();
+text = await resp.text();
 console.log(text);
 ```

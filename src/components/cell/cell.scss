@@ -2,6 +2,12 @@
 	display: flex;
 	flex-direction: row;
 	gap: 0.25rem;
+
+	border-left: 2px solid transparent;
+
+	&.selected {
+		border-left-color: var(--bulma-primary);
+	}
 }
 
 .cell-gutter {
@@ -29,6 +35,7 @@
 
 .cell-out-line {
 	white-space: pre-wrap;
+	word-break: break-all;
 	padding: 0.1rem 0.5rem;
 
 	& canvas {

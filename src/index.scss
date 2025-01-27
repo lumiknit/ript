@@ -6,6 +6,7 @@ textarea.input {
 }
 
 .navbar-menu {
+	z-index: 1000;
 	user-select: none;
 	-webkit-user-drag: none;
 	-webkit-user-select: none;
@@ -14,4 +15,10 @@ textarea.input {
 a.navbar-item {
 	display: flex;
 	justify-items: center;
+}
+
+.sticky-top {
+	position: sticky;
+	top: 0;
+	z-index: 10;
 }

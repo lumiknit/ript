@@ -7,6 +7,12 @@ import './cell.scss';
 import CellOutputs from './CellOutputs';
 import { store } from '../../store';
 
+const cellIndexMark = (cell: CellStruct) => {
+	if (!cell.output) return ' ';
+	else if (cell.output.endAt === undefined) return '*';
+	else return cell.output.index;
+};
+
 type Props = {
 	index: number;
 	cell: CellStruct;
@@ -31,10 +37,19 @@ const Cell: Component<Props> = (props) => {
 		return `font-family: ${fontFamily}; font-size: ${fontSize}px;`;
 	};
 
+	const handleFocus = (e: FocusEvent) => {
+		console.log('Focused', props.index, e);
+		store.notebookState.setFocused(props.index);
+	};
+
+	const selectedClass = () => {
+		return store.notebookState.focused() === props.index ? 'selected' : '';
+	};
+
 	return (
-		<div class="cell my-2">
+		<div class={`cell my-2 ${selectedClass()}`} onClick={handleFocus}>
 			<div class="cell-gutter">
-				<span>[{props.cell.output?.index ?? '*'}]</span>
+				<span>[{cellIndexMark(props.cell)}]</span>
 				<button onClick={props.onRun}>
 					<TbPlayerPlay />
 				</button>
@@ -43,6 +58,7 @@ const Cell: Component<Props> = (props) => {
 				<Editor
 					language={props.cell.code.language}
 					content={props.cell.code.code}
+					onFocus={handleFocus}
 					onModified={props.onCodeUpdate}
 					onKeyDown={handleEditorKeyDown}
 				/>

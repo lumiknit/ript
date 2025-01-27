@@ -27,6 +27,8 @@ type Props = JSX.HTMLAttributes<HTMLDivElement> & {
 
 	onModified?: (value: string) => void;
 	onKeyDown?: (event: KeyboardEvent) => void;
+	onFocus?: (event: FocusEvent) => void;
+	onBlur?: (event: FocusEvent) => void;
 };
 
 const Editor: Component<Props> = (props_) => {
@@ -37,6 +39,8 @@ const Editor: Component<Props> = (props_) => {
 		'placeholder',
 		'onModified',
 		'onKeyDown',
+		'onFocus',
+		'onBlur',
 	]);
 
 	let root: HTMLDivElement;
@@ -92,6 +96,12 @@ const Editor: Component<Props> = (props_) => {
 			root!.addEventListener('keydown', props.onKeyDown, {
 				capture: true,
 			});
+		}
+		if (props.onFocus) {
+			view.contentDOM.addEventListener('focus', props.onFocus);
+		}
+		if (props.onBlur) {
+			view.contentDOM.addEventListener('blur', props.onBlur);
 		}
 	});
 

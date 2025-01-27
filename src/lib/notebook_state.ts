@@ -1,9 +1,10 @@
-import { Accessor, createSignal, Setter, Signal } from 'solid-js';
+import { Accessor, batch, createSignal, Setter, Signal } from 'solid-js';
 
 import { Context } from './bg_exec';
-import { CellOutput, CellStruct, OutLine } from './cells';
+import { CellOutput, CellStruct, cellStructToMD, OutLine } from './cells';
 import { createLLMClientWithLocalSettings } from './llm/helper_settings';
-import defaultPrompt from './notebook_state_prompt.tpl?raw';
+import addCellPrompt from '../prompts/add_cell.tpl?raw';
+import genTitlePrompt from '../prompts/gen_title.tpl?raw';
 
 export type NotebookDoc = {
 	version: number;
@@ -21,21 +22,46 @@ export class NotebookState {
 	cells: Accessor<Signal<CellStruct>[]>;
 	setCells: Setter<Signal<CellStruct>[]>;
 
+	focused: Accessor<number>;
+	setFocused: Setter<number>;
+
 	workerCtx: Context;
 
+	execCnt: number = 0;
 	execQueue: number[] = [];
 	executing: boolean = false;
+	cancel: () => void = () => {};
 
 	constructor(doc?: NotebookDoc) {
 		[this.name, this.setName] = createSignal(doc?.name ?? 'Untitled');
 		[this.cells, this.setCells] = createSignal(
 			(doc?.cells ?? []).map((c) => createSignal(c))
 		);
+		[this.focused, this.setFocused] = createSignal(-1);
 		this.workerCtx = new Context();
 	}
 
+	resetContext() {
+		if (this.cancel) this.cancel();
+
+		this.workerCtx.terminateInstance();
+		this.workerCtx = new Context();
+		this.execCnt = 0;
+		this.execQueue = [];
+		this.cancel = () => {};
+
+		batch(() => {
+			this.cells().forEach((cell, i) => {
+				cell[1]((c) => ({ ...c, output: undefined }));
+			});
+		});
+	}
+
 	addCell(cell: CellStruct, index?: number) {
-		index = index ?? this.cells().length;
+		if (index === undefined) {
+			index = this.focused() + 1;
+		}
+		index = Math.min(Math.max(index, 0), this.cells().length);
 
 		const cellSig = createSignal(cell);
 
@@ -74,9 +100,17 @@ export class NotebookState {
 		cellSig[1](v);
 	}
 
+	runCellsBefore(index?: number) {
+		if (index === undefined) index = this.cells().length;
+		for (let i = 0; i < this.cells().length && i < index; i++) {
+			this.runCell(i);
+		}
+	}
+
 	runCell(index: number) {
 		const cell = this.cells()[index];
 		if (!cell) return;
+		cell[1]((c) => ({ ...c, output: undefined }));
 
 		// Push to the execution queue
 		this.execQueue.push(index);
@@ -88,28 +122,39 @@ export class NotebookState {
 		this.executing = true;
 
 		while (this.execQueue.length > 0) {
-			const index = this.execQueue.shift();
-			if (index === undefined) continue;
+			const cellIndex = this.execQueue.shift();
+			if (cellIndex === undefined) continue;
 
-			const cellSig = this.cells()[index];
+			const index = ++this.execCnt;
+
+			const cellSig = this.cells()[cellIndex];
 			if (!cellSig) continue;
 
 			const [cell, setCell] = cellSig;
+			const startAt = new Date();
 
 			const res = await this.workerCtx.run(
 				cell().code.code,
-				(lines: OutLine[]) => {
-					setCell((c) => ({
-						...c,
-						output: { index: 0, timestamp: new Date(), lines },
-					}));
+				(newLines: OutLine[]) => {
+					setCell((c) => {
+						const l = [...(c.output?.lines ?? []), ...newLines];
+						return {
+							...c,
+							output: {
+								index,
+								startAt,
+								lines: l,
+							},
+						};
+					});
 				}
 			);
 
 			// Update the cell
 			const output: CellOutput = {
-				index: 0,
-				timestamp: new Date(),
+				index,
+				startAt,
+				endAt: new Date(),
 				lines: res,
 			};
 			setCell((c) => ({ ...c, output }));
@@ -122,26 +167,18 @@ export class NotebookState {
 		const llm = await createLLMClientWithLocalSettings();
 		if (!llm) throw new Error("Couldn't create LLM client");
 
-		const systemPrompt = defaultPrompt;
+		const systemPrompt = addCellPrompt;
 
-		let userPrompt = '';
-		this.cells().forEach((cell, i) => {
-			const code = cell[0]().code.code;
-			userPrompt +=
-				`# Cell[${i}]\n` +
-				`## Code\n` +
-				'```javascript\n' +
-				code +
-				'\n```\n';
+		const cellMDs = [];
+		for (const cell of this.cells()) {
+			cellMDs.push(cellStructToMD(cell[0]()));
+		}
 
-			const o = cell[0]().output;
-			if (o) {
-				const outputs = o.lines.map((l) => l.value).join('\n');
-				userPrompt += `## Outputs\n` + '```\n' + outputs + '\n```\n';
-			}
-		});
-
-		userPrompt += `# Next Cell Request\n` + request;
+		const userPrompt =
+			cellMDs.join('\n\n') +
+			'\n\n' +
+			`# Current Cell Request\n` +
+			request;
 
 		console.log('System', systemPrompt);
 		console.log('User', userPrompt);
@@ -166,5 +203,27 @@ export class NotebookState {
 			},
 		};
 		this.addCell(cell);
+	}
+
+	async aiTitle() {
+		const llm = await createLLMClientWithLocalSettings();
+		if (!llm) throw new Error("Couldn't create LLM client");
+
+		const systemPrompt = genTitlePrompt;
+
+		const cellMDs = [];
+		for (const cell of this.cells()) {
+			cellMDs.push(cellStructToMD(cell[0]()));
+		}
+
+		const userPrompt = cellMDs.join('\n\n');
+
+		console.log('System', systemPrompt);
+		console.log('User', userPrompt);
+
+		const title = await llm.singleChat(systemPrompt, userPrompt);
+		console.log('Generated Title', title);
+
+		this.setName(title.trim());
 	}
 }
