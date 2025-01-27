@@ -7,7 +7,9 @@ import {
 	TbSettings,
 	TbUpload,
 } from 'solid-icons/tb';
-import { Component } from 'solid-js';
+import { Component, onMount } from 'solid-js';
+
+import { rootPath } from '../../env';
 
 const NavBar: Component = () => {
 	let burgerRef: HTMLAnchorElement;
@@ -18,6 +20,18 @@ const NavBar: Component = () => {
 		menuRef!.classList.toggle('is-active');
 	};
 
+	const close = () => {
+		burgerRef!.classList.remove('is-active');
+		menuRef!.classList.remove('is-active');
+	};
+
+	onMount(() => {
+		menuRef!.querySelectorAll('a').forEach((a) => {
+			if (!a.href) return;
+			a.addEventListener('click', close);
+		});
+	});
+
 	return (
 		<nav
 			class="navbar is-transparent is-fixed-top"
@@ -25,7 +39,7 @@ const NavBar: Component = () => {
 			aria-label="main navigation"
 		>
 			<div class="navbar-brand">
-				<A class="navbar-item" href="/">
+				<A class="navbar-item" href={`${rootPath}`}>
 					<img src="./favicon-96x96.png" />
 				</A>
 
@@ -78,11 +92,14 @@ const NavBar: Component = () => {
 						<a class="navbar-link">etc</a>
 
 						<div class="navbar-dropdown">
-							<A class="navbar-item" href="/settings">
+							<A
+								class="navbar-item"
+								href={`${rootPath}/settings`}
+							>
 								<TbSettings />
 								Settings
 							</A>
-							<A class="navbar-item" href="/about">
+							<A class="navbar-item" href={`${rootPath}/about`}>
 								About
 							</A>
 						</div>

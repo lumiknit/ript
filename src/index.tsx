@@ -4,6 +4,7 @@ import { render } from 'solid-js/web';
 
 import './index.scss';
 import App from './App.tsx';
+import { rootPath } from './env.ts';
 import AboutPage from './views/AboutPage';
 import NotebookPage from './views/NotebookPage';
 import SettingsPage from './views/SettingsPage.tsx';
@@ -13,9 +14,9 @@ const root = document.getElementById('root');
 render(
 	() => (
 		<Router root={App}>
-			<Route path="/" component={NotebookPage} />
-			<Route path="/about" component={AboutPage} />
-			<Route path="/settings" component={SettingsPage} />
+			<Route path={`${rootPath}/`} component={NotebookPage} />
+			<Route path={`${rootPath}/about`} component={AboutPage} />
+			<Route path={`${rootPath}/settings`} component={SettingsPage} />
 		</Router>
 	),
 	root!

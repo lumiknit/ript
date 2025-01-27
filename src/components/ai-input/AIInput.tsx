@@ -8,7 +8,7 @@ type Props = {
 };
 
 const AIInput: Component<Props> = () => {
-	let inputRef: HTMLInputElement;
+	let inputRef: HTMLTextAreaElement;
 
 	const handleSend = async () => {
 		toast.promise(store.notebookState.addCellWithAI(inputRef!.value), {
@@ -21,10 +21,9 @@ const AIInput: Component<Props> = () => {
 	return (
 		<div class="field is-grouped">
 			<p class="control is-expanded">
-				<input
+				<textarea
 					ref={inputRef!}
 					class="input"
-					type="text"
 					placeholder="Request to AI"
 				/>
 			</p>

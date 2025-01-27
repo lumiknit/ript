@@ -11,7 +11,9 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
+		"devGHPage": "vite -m ghpage",
 		"build": "tsc -b && vite build",
+		"buildGHPage": "tsc -b && vite build -m ghpage",
 		"preview": "vite preview",
 		"format": "eslint --fix ./src && prettier --write ."
 	},
@@ -39,6 +41,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.18.0",
+		"@types/node": "^22.10.10",
 		"eslint": "^9.18.0",
 		"eslint-import-resolver-typescript": "^3.7.0",
 		"eslint-plugin-import": "^2.31.0",

@@ -1,2 +1,6 @@
 // bulma
 @use 'bulma/bulma.scss';
+
+textarea.input {
+	resize: vertical;
+}
