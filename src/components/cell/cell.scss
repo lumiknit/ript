@@ -27,9 +27,13 @@
 	padding: 0.25rem;
 }
 
-.cell-out-text {
+.cell-out-line {
 	white-space: pre-wrap;
 	padding: 0.1rem 0.5rem;
+
+	& canvas {
+		max-width: 100%;
+	}
 }
 
 .cell-out-error {

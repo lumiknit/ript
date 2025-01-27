@@ -32,7 +32,7 @@ const Cell: Component<Props> = (props) => {
 	};
 
 	return (
-		<div class="cell m-2 p-2">
+		<div class="cell my-2">
 			<div class="cell-gutter">
 				<span>[{props.cell.output?.index ?? '*'}]</span>
 				<button onClick={props.onRun}>

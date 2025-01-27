@@ -39,8 +39,8 @@ const NavBar: Component = () => {
 			aria-label="main navigation"
 		>
 			<div class="navbar-brand">
-				<A class="navbar-item" href={`${rootPath}`}>
-					<img src="./favicon-96x96.png" />
+				<A class="navbar-item" href={`${rootPath}/`}>
+					<img src="/favicon-96x96.png" />
 				</A>
 
 				<a

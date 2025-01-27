@@ -6,21 +6,31 @@ export type CellCode = {
 	code: string;
 };
 
+export type OutLevel = 'info' | 'warn' | 'error';
+
+/**
+ * Cell output base
+ */
+export type OutBase = {
+	type: string;
+	level: OutLevel;
+};
+
 /**
  * Cell text output
  */
-export type OutText = {
+export type OutText = OutBase & {
 	type: 'text';
-	level: 'info' | 'warn' | 'error';
 	value: string;
 };
 
 /**
  * Cell image output
  */
-export type OutImage = {
+export type OutImage = OutBase & {
 	type: 'image';
-	value: string;
+	level: 'info' | 'warn' | 'error';
+	value: ImageBitmap;
 };
 
 /**

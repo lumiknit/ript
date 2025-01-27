@@ -1,13 +1,20 @@
 import { Component } from 'solid-js';
 
-import { NotebookState } from '../../lib/notebook_state';
+import { store } from '../../store';
 
 type Props = {
-	s: NotebookState;
+	_?: never;
 };
 
 const Toolbar: Component<Props> = () => {
-	return <div></div>;
+	const s = () => store.notebookState;
+	return (
+		<div>
+			<button class="button is-small is-primary"> Run </button>
+			<button class="button is-small is-danger"> Restart </button>
+			<button class="button is-small is-danger"> Restart </button>
+		</div>
+	);
 };
 
 export default Toolbar;

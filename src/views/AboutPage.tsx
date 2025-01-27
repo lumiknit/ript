@@ -7,8 +7,7 @@ const AboutPage: Component = () => {
 			<h1 class="title"> ript </h1>
 			<ul>
 				<li>
-					{' '}
-					Author:{' '}
+					<b>Author</b>:
 					<a href="https://github.com/lumiknit">
 						lumiknit (aasr4r4@gmail.com)
 					</a>

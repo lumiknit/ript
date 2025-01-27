@@ -10,7 +10,7 @@ type Props = {
 const App: Component<Props> = (props) => {
 	return (
 		<>
-			<Toaster />
+			<Toaster position="bottom-center" />
 
 			<NavBar />
 

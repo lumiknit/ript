@@ -3,6 +3,7 @@ import { Accessor, createSignal, Setter, Signal } from 'solid-js';
 import { Context } from './bg_exec';
 import { CellOutput, CellStruct, OutLine } from './cells';
 import { createLLMClientWithLocalSettings } from './llm/helper_settings';
+import defaultPrompt from './notebook_state_prompt.tpl?raw';
 
 export type NotebookDoc = {
 	version: number;
@@ -121,49 +122,32 @@ export class NotebookState {
 		const llm = await createLLMClientWithLocalSettings();
 		if (!llm) throw new Error("Couldn't create LLM client");
 
-		const systemPrompt = `
-# Requirements
-- Your whole answer should be a valid JavaScript code.
-  - Text description is not required. Only code is enough.
-  - For clarity, you may use markdown codeblock \`\`\`javascript ... \`\`\`.
-- Note the following javascript spec:
-  - Using modern JS features, write short and clean code. (Modern browser)
-    - Keep code short. Do not use 'async' if not necessary.
-  - DO NOT reimplement 'sleep: (ms: number) => Promise<void>'. Just use if you need.
-  - You can use 'console.log', 'console.error', 'console.warn' to show the output to user.
-  - '$' is a context object for sharing data between cells. e.g. '$.data = 10; console.log($["data"])'.
-  - It'll run in a Web Worker.
-  - You cannot use DOM APIs. e.g. document
-  - You can use all built-in APIs in the browser. For example, console, window, OffscreenCanvas, WebAssembly, etc.
-  - Your code will be wrapped with 'async () => { ... }' automatically. So, you can use 'await' at the top level.
-  - When you call async function at the top-level, you MUST use 'await'. e.g. 'await run(...)', 'await main(...)', 'await testCode(...)'.
+		const systemPrompt = defaultPrompt;
 
-- Please add descriptive comments to your code, in user's language.
+		let userPrompt = '';
+		this.cells().forEach((cell, i) => {
+			const code = cell[0]().code.code;
+			userPrompt +=
+				`# Cell[${i}]\n` +
+				`## Code\n` +
+				'```javascript\n' +
+				code +
+				'\n```\n';
 
-- User will give cells (code and its output) and their requests.
-- You should give a code which satisfies the request.
-		`.trim();
-
-		const cells = this.cells().map((c) => c[0]());
-		const str = cells.map((c, i) => {
-			const code = c.code.code;
-			let output: string | undefined = undefined;
-			if (c.output) {
-				output = c.output.lines.map((l) => '// ' + l.value).join('\n');
+			const o = cell[0]().output;
+			if (o) {
+				const outputs = o.lines.map((l) => l.value).join('\n');
+				userPrompt += `## Outputs\n` + '```\n' + outputs + '\n```\n';
 			}
-			let b = `// *** Cell ${i} ***\n${code}\n`;
-			if (output) {
-				b += `// *** Outputs ***\n${output}\n`;
-			}
-			return b;
 		});
 
-		const userPrompt = `${str}\n//---\nRequest: ${request}`;
+		userPrompt += `# Next Cell Request\n` + request;
+
 		console.log('System', systemPrompt);
 		console.log('User', userPrompt);
 
 		let code = await llm.singleChat(systemPrompt, userPrompt);
-		console.log(code);
+		console.log('Output', code);
 
 		const idx = code.indexOf('```javascript');
 		if (idx >= 0) {
@@ -173,7 +157,7 @@ export class NotebookState {
 				code = code.slice(0, end);
 			}
 		}
-		code.trim();
+		code = code.trim();
 
 		const cell: CellStruct = {
 			code: {
