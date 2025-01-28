@@ -40,6 +40,10 @@ export const setLocalSettings = (
 	);
 };
 
+export const setNotebookState = (
+	v: StoreSetter<NotebookState, ['notebookState']>
+) => setStore('notebookState', v);
+
 // Initialize the store.
 (async () => {
 	// Load local settings.

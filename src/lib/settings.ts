@@ -45,7 +45,7 @@ const defaultLocalSettings: LocalSettings = {
 
 	// AI - Groq
 	['ai.groq.apiKey']: '',
-	['ai.groq.model']: 'llama-3.1-8b-instant',
+	['ai.groq.model']: 'deepseek-r1-distill-llama-70b',
 };
 
 export const fillLocalSettings = (

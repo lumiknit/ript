@@ -1,2 +1,32 @@
 // bulma
 @use 'bulma/bulma.scss';
+
+textarea.input {
+	resize: vertical;
+}
+
+.no-user-select {
+	user-select: none;
+	-webkit-user-drag: none;
+	-webkit-user-select: none;
+}
+
+.navbar-menu {
+	z-index: 1000;
+}
+
+a.navbar-item {
+	display: flex;
+	justify-items: center;
+}
+
+.sticky-top {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.blur-background {
+	background-color: hsl(from var(--bulma-body-background-color) h s l / 0.5);
+	backdrop-filter: blur(2px);
+}

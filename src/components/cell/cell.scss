@@ -2,19 +2,35 @@
 	display: flex;
 	flex-direction: row;
 	gap: 0.25rem;
+
+	border-left: 4px solid transparent;
+
+	&.selected {
+		border-left-color: var(--bulma-primary);
+	}
 }
 
 .cell-gutter {
-	flex: 0 0 2.5rem;
+	flex: 0 0 2rem;
 	display: flex;
 	flex-direction: column;
 	align-items: end;
+
+	& > button > svg {
+		width: 1.25rem;
+		height: 1.25rem;
+	}
 }
 
 .cell-main {
+	display: flex;
+	flex-direction: column;
+
 	flex: 1;
 
 	border: 1px solid rgba(var(--bulma-text-rgb), 0.5);
+	border-radius: 0.25rem;
+	overflow: hidden;
 
 	& > :not(:first-child) {
 		border-top: 1px solid rgba(var(--bulma-text-rgb), 0.5);
@@ -27,9 +43,14 @@
 	padding: 0.25rem;
 }
 
-.cell-out-text {
+.cell-out-line {
 	white-space: pre-wrap;
+	word-break: break-all;
 	padding: 0.1rem 0.5rem;
+
+	& canvas {
+		max-width: 100%;
+	}
 }
 
 .cell-out-error {

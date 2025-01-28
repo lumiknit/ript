@@ -1,40 +1,178 @@
-import { Accessor, createSignal, Setter, Signal } from 'solid-js';
+import {
+	Accessor,
+	batch,
+	createEffect,
+	createSignal,
+	Setter,
+	Signal,
+} from 'solid-js';
+import toast from 'solid-toast';
 
 import { Context } from './bg_exec';
-import { CellOutput, CellStruct, OutLine } from './cells';
-import { createLLMClientWithLocalSettings } from './llm/helper_settings';
-
-export type NotebookDoc = {
-	version: number;
-	name: string;
-	cells: CellStruct[];
-};
+import { notebooksTx } from './idb';
+import {
+	CellOutput,
+	CellStruct,
+	cellStructToMD,
+	OutLine,
+} from './notebook/cells';
+import addCellPrompt from '../prompts/gen_code.tpl?raw';
+import genTitlePrompt from '../prompts/gen_title.tpl?raw';
+import { LLMClient } from './llm/interface';
+import {
+	freezeCell,
+	FrozenCell,
+	NotebookDoc,
+	thawCell,
+} from './notebook/notebook';
+import { longRandomString } from './random';
 
 /**
- * Notebook status
+ * Current UI Notebook State.
+ *
+ * This class contains the current state of the notebook.
  */
 export class NotebookState {
+	_id: string;
+
+	// Notebook name
 	name: Accessor<string>;
 	setName: Setter<string>;
 
+	// Notebook cells
 	cells: Accessor<Signal<CellStruct>[]>;
 	setCells: Setter<Signal<CellStruct>[]>;
 
+	// Current focused cell index.
+	focused: Accessor<number>;
+	setFocused: Setter<number>;
+
+	/**
+	 * Current worker context
+	 */
 	workerCtx: Context;
 
+	/**
+	 * Execution index counter
+	 */
+	execCnt: number = 0;
+
+	/**
+	 * Execution queue.
+	 * This queue contains the indexes of the cells that are to be
+	 */
 	execQueue: number[] = [];
+
+	/**
+	 * Execution status
+	 */
 	executing: boolean = false;
 
-	constructor(doc?: NotebookDoc) {
-		[this.name, this.setName] = createSignal(doc?.name ?? 'Untitled');
-		[this.cells, this.setCells] = createSignal(
-			(doc?.cells ?? []).map((c) => createSignal(c))
-		);
+	/**
+	 * Cancel function for the current execution
+	 */
+	cancel: () => void = () => {};
+
+	saveTimeout: number = -1;
+
+	constructor() {
+		this._id = longRandomString();
+		[this.name, this.setName] = createSignal('Untitled');
+		[this.cells, this.setCells] = createSignal<Signal<CellStruct>[]>([]);
+		[this.focused, this.setFocused] = createSignal(-1);
 		this.workerCtx = new Context();
+
+		createEffect(() => {
+			this.name();
+			for (const cell of this.cells()) {
+				cell[0]();
+			}
+
+			if (this.saveTimeout < 0) {
+				this.saveTimeout = window.setTimeout(() => {
+					this.save();
+					toast.success('Auto-saved', { duration: 1000 });
+					this.saveTimeout = -1;
+				}, 5000);
+			}
+		});
 	}
 
+	/**
+	 * Freeze the current notebook state.
+	 */
+	async freeze(): Promise<NotebookDoc> {
+		const cells: FrozenCell[] = await Promise.all(
+			this.cells().map(async (cell) => await freezeCell(cell[0]()))
+		);
+		return {
+			_id: this._id,
+			version: 1,
+			name: this.name(),
+			updatedAt: new Date().toISOString(),
+			cells,
+		};
+	}
+
+	/**
+	 * Thaw the notebook state from a frozen state.
+	 */
+	async thaw(doc: NotebookDoc) {
+		this.resetContext();
+
+		const cells: CellStruct[] = await Promise.all(doc.cells.map(thawCell));
+		this._id = doc._id;
+		this.setName(doc.name);
+		this.setCells(cells.map((c) => createSignal(c)));
+	}
+
+	/**
+	 * Save to idb
+	 */
+	async save() {
+		const doc = await this.freeze();
+		const tx = await notebooksTx<NotebookDoc>();
+		await tx.put(doc);
+	}
+
+	/**
+	 * Load from idb
+	 */
+	async load(id: string) {
+		const tx = await notebooksTx<NotebookDoc>();
+		const doc = await tx.get(id);
+		if (!doc) return;
+		await this.thaw(doc);
+	}
+
+	/**
+	 * Reset current working context.
+	 * If there is an ongoing execution, it will be cancelled.
+	 */
+	resetContext() {
+		if (this.cancel) this.cancel();
+
+		this.workerCtx.terminateInstance();
+		this.workerCtx = new Context();
+		this.execCnt = 0;
+		this.execQueue = [];
+		this.cancel = () => {};
+
+		batch(() => {
+			this.cells().forEach((cell) => {
+				cell[1]((c) => ({ ...c, output: undefined }));
+			});
+		});
+	}
+
+	/**
+	 * Insert a cell at the specified index.
+	 */
 	addCell(cell: CellStruct, index?: number) {
-		index = index ?? this.cells().length;
+		if (index === undefined) {
+			index = this.focused() + 1;
+		}
+		index = Math.min(Math.max(index, 0), this.cells().length);
 
 		const cellSig = createSignal(cell);
 
@@ -44,8 +182,21 @@ export class NotebookState {
 
 		// Update queue
 		this.execQueue = this.execQueue.map((v) => (v >= index ? v + 1 : v));
+
+		this.setFocused(index);
 	}
 
+	scrollToCell(index: number) {
+		const el = document.getElementById(`cell-${index}`);
+		if (el)
+			el.scrollIntoView({
+				behavior: 'smooth',
+			});
+	}
+
+	/**
+	 * Add an empty cell at the specified index.
+	 */
 	addEmptyCell(index?: number) {
 		const emptyCell: CellStruct = {
 			code: {
@@ -56,6 +207,9 @@ export class NotebookState {
 		this.addCell(emptyCell, index);
 	}
 
+	/**
+	 * Remove a cell at the specified index.
+	 */
 	removeCell(index: number) {
 		this.setCells((cs) => cs.filter((_, i) => i !== index));
 
@@ -67,48 +221,80 @@ export class NotebookState {
 		});
 	}
 
+	/**
+	 * Update a cell at the specified index.
+	 */
 	updateCell(index: number, v: CellStruct | ((c: CellStruct) => CellStruct)) {
 		const cellSig = this.cells()[index];
 		if (!cellSig) return;
 		cellSig[1](v);
 	}
 
+	/**
+	 * Execute all cells before the specified index.
+	 * If the index is not specified, all cells will be executed.
+	 */
+	runCellsBefore(index?: number) {
+		if (index === undefined) index = this.cells().length;
+		for (let i = 0; i < this.cells().length && i < index; i++) {
+			this.runCell(i);
+		}
+	}
+
+	/**
+	 * Execute a cell at the specified index.
+	 */
 	runCell(index: number) {
 		const cell = this.cells()[index];
 		if (!cell) return;
+		cell[1]((c) => ({ ...c, output: undefined }));
 
 		// Push to the execution queue
 		this.execQueue.push(index);
 		this.execute();
 	}
 
+	/**
+	 * Execute cell loop.
+	 */
 	private async execute() {
 		if (this.executing) return;
 		this.executing = true;
 
 		while (this.execQueue.length > 0) {
-			const index = this.execQueue.shift();
-			if (index === undefined) continue;
+			const cellIndex = this.execQueue.shift();
+			if (cellIndex === undefined) continue;
 
-			const cellSig = this.cells()[index];
+			const index = ++this.execCnt;
+
+			const cellSig = this.cells()[cellIndex];
 			if (!cellSig) continue;
 
 			const [cell, setCell] = cellSig;
+			const startAt = new Date();
 
 			const res = await this.workerCtx.run(
 				cell().code.code,
-				(lines: OutLine[]) => {
-					setCell((c) => ({
-						...c,
-						output: { index: 0, timestamp: new Date(), lines },
-					}));
+				(newLines: OutLine[]) => {
+					setCell((c) => {
+						const l = [...(c.output?.lines ?? []), ...newLines];
+						return {
+							...c,
+							output: {
+								index,
+								startAt,
+								lines: l,
+							},
+						};
+					});
 				}
 			);
 
 			// Update the cell
 			const output: CellOutput = {
-				index: 0,
-				timestamp: new Date(),
+				index,
+				startAt,
+				endAt: new Date(),
 				lines: res,
 			};
 			setCell((c) => ({ ...c, output }));
@@ -117,53 +303,36 @@ export class NotebookState {
 		this.executing = false;
 	}
 
-	async addCellWithAI(request: string) {
-		const llm = await createLLMClientWithLocalSettings();
-		if (!llm) throw new Error("Couldn't create LLM client");
+	/**
+	 * Generate a code and add a cell with the LLM.
+	 */
+	async genCode(llm: LLMClient, request: string) {
+		let focused = this.focused();
+		if (focused < 0 || focused >= this.cells().length) {
+			// Add cell and change focus
+			this.addEmptyCell();
+			focused = this.focused();
+		}
 
-		const systemPrompt = `
-# Requirements
-- Your whole answer should be a valid JavaScript code.
-  - Text description is not required. Only code is enough.
-  - For clarity, you may use markdown codeblock \`\`\`javascript ... \`\`\`.
-- Note the following javascript spec:
-  - Using modern JS features, write short and clean code. (Modern browser)
-    - Keep code short. Do not use 'async' if not necessary.
-  - DO NOT reimplement 'sleep: (ms: number) => Promise<void>'. Just use if you need.
-  - You can use 'console.log', 'console.error', 'console.warn' to show the output to user.
-  - '$' is a context object for sharing data between cells. e.g. '$.data = 10; console.log($["data"])'.
-  - It'll run in a Web Worker.
-  - You cannot use DOM APIs. e.g. document
-  - You can use all built-in APIs in the browser. For example, console, window, OffscreenCanvas, WebAssembly, etc.
-  - Your code will be wrapped with 'async () => { ... }' automatically. So, you can use 'await' at the top level.
-  - When you call async function at the top-level, you MUST use 'await'. e.g. 'await run(...)', 'await main(...)', 'await testCode(...)'.
+		const systemPrompt = addCellPrompt;
 
-- Please add descriptive comments to your code, in user's language.
+		const cells = this.cells();
+		let userPrompt = '';
+		for (let i = 0; i < focused; i++) {
+			userPrompt += `## Cell [${i}]\n`;
+			userPrompt += cellStructToMD(cells[i][0]());
+		}
 
-- User will give cells (code and its output) and their requests.
-- You should give a code which satisfies the request.
-		`.trim();
+		userPrompt += `## Focused Cell (to be edited)\n`;
+		userPrompt += cellStructToMD(cells[focused][0]());
 
-		const cells = this.cells().map((c) => c[0]());
-		const str = cells.map((c, i) => {
-			const code = c.code.code;
-			let output: string | undefined = undefined;
-			if (c.output) {
-				output = c.output.lines.map((l) => '// ' + l.value).join('\n');
-			}
-			let b = `// *** Cell ${i} ***\n${code}\n`;
-			if (output) {
-				b += `// *** Outputs ***\n${output}\n`;
-			}
-			return b;
-		});
+		userPrompt += `\n\n# Current Cell Request\n${request}`;
 
-		const userPrompt = `${str}\n//---\nRequest: ${request}`;
 		console.log('System', systemPrompt);
 		console.log('User', userPrompt);
 
 		let code = await llm.singleChat(systemPrompt, userPrompt);
-		console.log(code);
+		console.log('Output', code);
 
 		const idx = code.indexOf('```javascript');
 		if (idx >= 0) {
@@ -173,14 +342,38 @@ export class NotebookState {
 				code = code.slice(0, end);
 			}
 		}
-		code.trim();
+		code = code.trim();
 
-		const cell: CellStruct = {
-			code: {
-				language: 'javascript',
-				code,
-			},
-		};
-		this.addCell(cell);
+		this.updateCell(focused, (c) => {
+			return {
+				...c,
+				code: {
+					language: 'javascript',
+					code,
+				},
+			};
+		});
+	}
+
+	/**
+	 * Generate a title with the LLM.
+	 */
+	async genTitle(llm: LLMClient) {
+		const systemPrompt = genTitlePrompt;
+
+		const cellMDs = [];
+		for (const cell of this.cells()) {
+			cellMDs.push(cellStructToMD(cell[0]()));
+		}
+
+		const userPrompt = cellMDs.join('\n\n');
+
+		console.log('System', systemPrompt);
+		console.log('User', userPrompt);
+
+		const title = await llm.singleChat(systemPrompt, userPrompt);
+		console.log('Generated Title', title);
+
+		this.setName(title.trim());
 	}
 }

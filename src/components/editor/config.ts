@@ -149,7 +149,7 @@ export const configToExtension = async (
 		extensions.push(tm);
 	}
 
-	if (config['wrap.line']) {
+	if (config['wrap.line'] ?? true) {
 		extensions.push(EditorView.lineWrapping);
 	}
 

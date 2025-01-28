@@ -1,4 +1,4 @@
-import { OutLine } from '../cells';
+import { OutLine } from '../notebook/cells';
 
 export type RunReqMsg = {
 	type: '>run';
