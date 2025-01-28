@@ -1,4 +1,4 @@
-import { TbPlayerPlay } from 'solid-icons/tb';
+import { TbPlayerPlay, TbTrash } from 'solid-icons/tb';
 import { Component, Show } from 'solid-js';
 
 import { CellStruct as CellStruct } from '../../lib/notebook/cells';
@@ -46,16 +46,28 @@ const Cell: Component<Props> = (props) => {
 		return store.notebookState.focused() === props.index ? 'selected' : '';
 	};
 
+	const handleDelete = () => {
+		store.notebookState.removeCell(props.index);
+	};
+
 	return (
-		<div class={`cell my-2 ${selectedClass()}`} onClick={handleFocus}>
+		<div
+			id={`cell-${props.index}`}
+			class={`cell my-2 ${selectedClass()}`}
+			onClick={handleFocus}
+		>
 			<div class="cell-gutter">
 				<span>[{cellIndexMark(props.cell)}]</span>
-				<button onClick={props.onRun}>
+				<button class="has-text-default" onClick={props.onRun}>
 					<TbPlayerPlay />
+				</button>
+				<button class="has-text-danger" onClick={handleDelete}>
+					<TbTrash />
 				</button>
 			</div>
 			<div style={style()} class="cell-main">
 				<Editor
+					class="cell-code"
 					placeholder={
 						'Code here, Ctrl/Cmd+Enter to run, language: ' +
 						props.cell.code.language

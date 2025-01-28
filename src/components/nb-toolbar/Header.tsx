@@ -5,7 +5,7 @@ import Toolbar from './Toolbar';
 
 const Header: Component = () => {
 	return (
-		<div class="nb-header sticky-top">
+		<div class="container p-2 nb-header sticky-top blur-background">
 			<Title />
 			<Toolbar />
 		</div>

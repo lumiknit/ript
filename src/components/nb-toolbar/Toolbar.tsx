@@ -1,11 +1,11 @@
 import {
-	TbDeviceFloppy,
+	TbArrowBigDownLines,
 	TbPlayerPlay,
 	TbPlayerStop,
-	TbPlus,
+	TbSquarePlus,
+	TbSquareX,
 } from 'solid-icons/tb';
 import { Component, JSX } from 'solid-js';
-import toast from 'solid-toast';
 
 import { store } from '../../store';
 
@@ -31,32 +31,50 @@ type Props = {
 };
 
 const Toolbar: Component<Props> = () => {
-	const handleSave = async () => {
-		toast.promise((async () => await store.notebookState.save())(), {
-			loading: 'Saving...',
-			success: 'Saved',
-			error: (e) => {
-				console.error(e);
-				return 'Failed to save';
-			},
-		});
+	const handleRunOne = async () => {
+		store.notebookState.runCell(store.notebookState.focused());
+		const focused = store.notebookState.focused();
+		if (focused + 1 < store.notebookState.cells().length) {
+			store.notebookState.setFocused(focused + 1);
+		} else {
+			store.notebookState.addEmptyCell();
+		}
 	};
 
 	return (
 		<div class="nb-toolbar">
-			<Btn class="is-primary" onClick={handleSave}>
-				<TbDeviceFloppy />
-			</Btn>
-
 			<Btn class="" onClick={() => store.notebookState.addEmptyCell()}>
-				<TbPlus />
+				<TbSquarePlus />
 			</Btn>
 
 			<Btn
-				class="is-success"
-				onClick={() => store.notebookState.runCellsBefore()}
+				class="is-danger"
+				onClick={() =>
+					store.notebookState.removeCell(
+						store.notebookState.focused()
+					)
+				}
 			>
+				<TbSquareX />
+			</Btn>
+
+			<span class="p-1" />
+
+			<Btn class="is-success" onClick={handleRunOne}>
 				<TbPlayerPlay />
+			</Btn>
+
+			<span class="p-1" />
+
+			<Btn
+				class="is-success"
+				onClick={() =>
+					store.notebookState.runCellsBefore(
+						1 + store.notebookState.focused()
+					)
+				}
+			>
+				<TbArrowBigDownLines />
 			</Btn>
 
 			<Btn

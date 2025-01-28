@@ -30,6 +30,7 @@ const Title: Component = () => {
 		<div class="mb-2">
 			<Switch>
 				<Match when={editing()}>
+					<code>{store.notebookState._id}</code>
 					<div class="field is-grouped">
 						<p class="control is-expanded">
 							<input
@@ -61,8 +62,7 @@ const Title: Component = () => {
 					</div>
 				</Match>
 				<Match when>
-					<code>{store.notebookState._id}</code>
-					<h1 class="title is-1" onClick={() => setEditing(true)}>
+					<h1 class="title is-3" onClick={() => setEditing(true)}>
 						{store.notebookState.name() || 'Untitled'}
 					</h1>
 				</Match>

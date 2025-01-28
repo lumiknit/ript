@@ -5,11 +5,14 @@ textarea.input {
 	resize: vertical;
 }
 
-.navbar-menu {
-	z-index: 1000;
+.no-user-select {
 	user-select: none;
 	-webkit-user-drag: none;
 	-webkit-user-select: none;
+}
+
+.navbar-menu {
+	z-index: 1000;
 }
 
 a.navbar-item {
@@ -21,4 +24,9 @@ a.navbar-item {
 	position: sticky;
 	top: 0;
 	z-index: 10;
+}
+
+.blur-background {
+	background-color: hsl(from var(--bulma-body-background-color) h s l / 0.5);
+	backdrop-filter: blur(2px);
 }

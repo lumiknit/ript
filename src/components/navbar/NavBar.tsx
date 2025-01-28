@@ -37,7 +37,7 @@ const NavBar: Component = () => {
 	const handleNew = () => {
 		setNotebookState(new NotebookState());
 		toast.success('New notebook created');
-		navigate('/');
+		navigate(`${rootPath}/`);
 	};
 
 	const handleSave = () => {
@@ -71,7 +71,7 @@ const NavBar: Component = () => {
 		>
 			<div class="navbar-brand">
 				<A class="navbar-item" href={`${rootPath}/`}>
-					<img src="/favicon-96x96.png" />
+					<img src={`${rootPath}/favicon-96x96.png`} />
 				</A>
 
 				<a
@@ -89,7 +89,11 @@ const NavBar: Component = () => {
 					<span />
 				</a>
 			</div>
-			<div ref={menuRef!} id="navbarTarget" class="navbar-menu">
+			<div
+				ref={menuRef!}
+				id="navbarTarget"
+				class="navbar-menu no-user-select"
+			>
 				<div class="navbar-start">
 					<div class="navbar-item has-dropdown is-hoverable">
 						<a class="navbar-link">Files</a>

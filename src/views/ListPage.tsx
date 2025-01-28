@@ -2,6 +2,7 @@ import { useNavigate } from '@solidjs/router';
 import { Component, createSignal, For, onMount } from 'solid-js';
 import toast from 'solid-toast';
 
+import { rootPath } from '../env';
 import { notebooksTx } from '../lib/idb';
 import { NotebookDoc } from '../lib/notebook/notebook';
 import { store } from '../store';
@@ -20,7 +21,7 @@ const ListPage: Component = () => {
 		await toast.promise(
 			(async () => {
 				await store.notebookState.load(id);
-				navigate('/');
+				navigate(`${rootPath}/`);
 			})(),
 			{
 				loading: 'Opening...',
@@ -28,6 +29,27 @@ const ListPage: Component = () => {
 				error: (e) => {
 					console.error(e);
 					return 'Failed to open';
+				},
+			}
+		);
+	};
+
+	const handleDelete = async (id: string) => {
+		if (!confirm('Are you sure to delete?')) return;
+
+		await toast.promise(
+			(async () => {
+				const tx = await notebooksTx<NotebookDoc>();
+				await tx.delete(id);
+				const all = await tx.getAll();
+				setList(all);
+			})(),
+			{
+				loading: 'Deleting...',
+				success: 'Deleted',
+				error: (e) => {
+					console.error(e);
+					return 'Failed to delete';
 				},
 			}
 		);
@@ -48,6 +70,12 @@ const ListPage: Component = () => {
 							{nb.name} ({nb._id},{' '}
 							{new Date(nb.updatedAt).toLocaleString()})
 						</a>
+						<button
+							class="button is-small is-danger"
+							onClick={() => handleDelete(nb._id)}
+						>
+							Delete
+						</button>
 					</div>
 				)}
 			</For>

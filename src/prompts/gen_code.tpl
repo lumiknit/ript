@@ -14,6 +14,8 @@ You should give a code for the next cell based on the user's input.
   - Use await to prevent not executing promises.
 - **Use console to show the user's expectation.**
 - At the beginning add short comments about the request (intention) and the code.
+- Your code will replace **only focused cell**.
+  - You do not need to include previous cells.
 
 ## User's input
 

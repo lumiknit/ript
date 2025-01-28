@@ -18,25 +18,25 @@ const Notebook: Component = () => {
 	};
 
 	return (
-		<div class="container p-2">
+		<>
 			<Header />
-
-			<Show when={store.notebookState.cells().length === 0}>
-				<span> (No Cells) </span>
-			</Show>
-			<For each={store.notebookState.cells()}>
-				{(cell, i) => (
-					<Cell
-						index={i()}
-						cell={cell[0]()}
-						onCodeUpdate={handleCodeUpdate(i())}
-						onRun={handleRun(i())}
-					/>
-				)}
-			</For>
-
+			<div class="container p-2">
+				<Show when={store.notebookState.cells().length === 0}>
+					<span> (No Cells) </span>
+				</Show>
+				<For each={store.notebookState.cells()}>
+					{(cell, i) => (
+						<Cell
+							index={i()}
+							cell={cell[0]()}
+							onCodeUpdate={handleCodeUpdate(i())}
+							onRun={handleRun(i())}
+						/>
+					)}
+				</For>
+			</div>
 			<Footer />
-		</div>
+		</>
 	);
 };
 

@@ -1,4 +1,12 @@
-import { Accessor, batch, createSignal, Setter, Signal } from 'solid-js';
+import {
+	Accessor,
+	batch,
+	createEffect,
+	createSignal,
+	Setter,
+	Signal,
+} from 'solid-js';
+import toast from 'solid-toast';
 
 import { Context } from './bg_exec';
 import { notebooksTx } from './idb';
@@ -8,7 +16,7 @@ import {
 	cellStructToMD,
 	OutLine,
 } from './notebook/cells';
-import addCellPrompt from '../prompts/add_cell.tpl?raw';
+import addCellPrompt from '../prompts/gen_code.tpl?raw';
 import genTitlePrompt from '../prompts/gen_title.tpl?raw';
 import { LLMClient } from './llm/interface';
 import {
@@ -65,12 +73,29 @@ export class NotebookState {
 	 */
 	cancel: () => void = () => {};
 
+	saveTimeout: number = -1;
+
 	constructor() {
 		this._id = longRandomString();
 		[this.name, this.setName] = createSignal('Untitled');
 		[this.cells, this.setCells] = createSignal<Signal<CellStruct>[]>([]);
 		[this.focused, this.setFocused] = createSignal(-1);
 		this.workerCtx = new Context();
+
+		createEffect(() => {
+			this.name();
+			for (const cell of this.cells()) {
+				cell[0]();
+			}
+
+			if (this.saveTimeout < 0) {
+				this.saveTimeout = window.setTimeout(() => {
+					this.save();
+					toast.success('Auto-saved', { duration: 1000 });
+					this.saveTimeout = -1;
+				}, 5000);
+			}
+		});
 	}
 
 	/**
@@ -159,6 +184,14 @@ export class NotebookState {
 		this.execQueue = this.execQueue.map((v) => (v >= index ? v + 1 : v));
 
 		this.setFocused(index);
+	}
+
+	scrollToCell(index: number) {
+		const el = document.getElementById(`cell-${index}`);
+		if (el)
+			el.scrollIntoView({
+				behavior: 'smooth',
+			});
 	}
 
 	/**
@@ -273,19 +306,27 @@ export class NotebookState {
 	/**
 	 * Generate a code and add a cell with the LLM.
 	 */
-	async genNewCell(llm: LLMClient, request: string) {
-		const systemPrompt = addCellPrompt;
-
-		const cellMDs = [];
-		for (const cell of this.cells()) {
-			cellMDs.push(cellStructToMD(cell[0]()));
+	async genCode(llm: LLMClient, request: string) {
+		let focused = this.focused();
+		if (focused < 0 || focused >= this.cells().length) {
+			// Add cell and change focus
+			this.addEmptyCell();
+			focused = this.focused();
 		}
 
-		const userPrompt =
-			cellMDs.join('\n\n') +
-			'\n\n' +
-			`# Current Cell Request\n` +
-			request;
+		const systemPrompt = addCellPrompt;
+
+		const cells = this.cells();
+		let userPrompt = '';
+		for (let i = 0; i < focused; i++) {
+			userPrompt += `## Cell [${i}]\n`;
+			userPrompt += cellStructToMD(cells[i][0]());
+		}
+
+		userPrompt += `## Focused Cell (to be edited)\n`;
+		userPrompt += cellStructToMD(cells[focused][0]());
+
+		userPrompt += `\n\n# Current Cell Request\n${request}`;
 
 		console.log('System', systemPrompt);
 		console.log('User', userPrompt);
@@ -303,13 +344,15 @@ export class NotebookState {
 		}
 		code = code.trim();
 
-		const cell: CellStruct = {
-			code: {
-				language: 'javascript',
-				code,
-			},
-		};
-		this.addCell(cell);
+		this.updateCell(focused, (c) => {
+			return {
+				...c,
+				code: {
+					language: 'javascript',
+					code,
+				},
+			};
+		});
 	}
 
 	/**

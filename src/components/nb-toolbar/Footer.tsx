@@ -4,7 +4,7 @@ import AIInput from './AIInput';
 
 const Footer: Component = () => {
 	return (
-		<footer class="nb-footer">
+		<footer class="container p-2 nb-footer blur-background">
 			<AIInput />
 		</footer>
 	);
