@@ -127,8 +127,7 @@ const LocalSettingsEdit: Component = () => {
 				placeholder="monospace"
 			>
 				<p>
-					{' '}
-					Editor font family. e.g.{' '}
+					Editor font family. e.g.
 					<code>'Fira Code', Monaco, monospace</code>
 				</p>
 			</TextSetting>
@@ -173,6 +172,12 @@ const LocalSettingsEdit: Component = () => {
 					</a>
 				</p>
 			</TextSetting>
+
+			<SelectSetting
+				label="OpenAI Model"
+				settingKey="ai.openai.model"
+				options={['gpt-4o-mini', 'gpt-4o']}
+			/>
 
 			<SettingSection label="AI - Google Gemini" />
 

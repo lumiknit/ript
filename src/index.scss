@@ -5,6 +5,11 @@ textarea.input {
 	resize: vertical;
 }
 
+.toaster svg {
+	width: 1.25rem;
+	height: 1.25rem;
+}
+
 .no-user-select {
 	user-select: none;
 	-webkit-user-drag: none;
