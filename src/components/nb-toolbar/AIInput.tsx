@@ -67,7 +67,7 @@ const AIInput: Component<Props> = () => {
 
 	const eos = new Set<string>(['.', '!', '?', ';']);
 
-	const handleInput = (e: InputEvent) => {
+	const handleInput = () => {
 		if (!autoSend()) return;
 
 		// Parse the string. Check the sentence finish one of the following characters: .!?; and then add a new line.
