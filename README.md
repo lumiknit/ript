@@ -1,5 +1,7 @@
 # ript
 
+**Deprecated**: Most same features will be provided in [unhurry](https://github.com/lumiknit/unhurry)
+
 Front-only js notebook for the mobile and desktop web.
 
 ## Preview
